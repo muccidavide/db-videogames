@@ -82,9 +82,9 @@ FROM reviews
 GROUP BY videogame_id;
 
 --3- Contare quanti videogiochi hanno ciascuna classificazione PEGI (della classificazione PEGI vogliamo solo l'ID) (13) /// da controllare!!!!
-SELECT COUNT(*)
-FROM award_videogame
-GROUP BY award_id;
+SELECT COUNT(videogame_id)
+FROM pegi_label_videogame
+GROUP BY pegi_label_id;
 
 --4- Mostrare il numero di videogiochi rilasciati ogni anno (11)
 SELECT COUNT(*)
@@ -114,21 +114,104 @@ GROUP BY player_id;
 
 
 -- 2- Sezionare tutti i videogame dei tornei tenuti nel 2016, mostrandoli una sola volta (226)
-
+SELECT videogames.id
+FROM videogames
+INNER JOIN tournament_videogame
+ON videogames.id = videogame_id
+INNER JOIN tournaments
+ON tournaments.id = tournament_id
+WHERE year = 2016
+GROUP BY videogames.id;
 
 -- 3- Mostrare le categorie di ogni videogioco (1718)
+SELECT *
+FROM videogames
+INNER JOIN category_videogame
+ON videogames.id = videogame_id
+INNER JOIN categories
+ON categories.id = category_id;
 
 -- 4- Selezionare i dati di tutte le software house che hanno rilasciato almeno un gioco dopo il 2020, mostrandoli una sola volta (6)
 
+SELECT DISTINCT software_houses.*
+FROM videogames
+INNER JOIN software_houses
+ON software_houses.id = videogames.software_house_id
+WHERE YEAR(videogames.release_date) > 2020;
+
 -- 5- Selezionare i premi ricevuti da ogni software house per i videogiochi che ha prodotto (55)
+
+SELECT awards.name, videogames.name , software_houses.name 
+FROM awards
+INNER JOIN award_videogame
+ON award_videogame.award_id = awards.id
+INNER JOIN videogames 
+ON videogames.id = videogame_id
+INNER JOIN software_houses
+ON software_houses.id = videogames.software_house_id
+ORDER BY software_houses.name ;
 
 -- 6- Selezionare categorie e classificazioni PEGI dei videogiochi che hanno ricevuto recensioni da 4 e 5 stelle, mostrandole una sola volta (3363)
 
+SELECT DISTINCT categories.name, pegi_labels.name, videogames.name
+FROM reviews
+INNER JOIN videogames
+ON videogames.id = reviews.videogame_id
+INNER JOIN category_videogame
+ON category_videogame.videogame_id = videogames.id
+INNER JOIN categories
+ON categories.id = category_videogame.category_id
+INNER JOIN pegi_label_videogame
+ON pegi_label_videogame.videogame_id = videogames.id
+INNER JOIN pegi_labels
+ON pegi_labels.id = pegi_label_videogame.pegi_label_id
+WHERE reviews.rating >= 4;
+
 -- 7- Selezionare quali giochi erano presenti nei tornei nei quali hanno partecipato i giocatori il cui nome inizia per 'S' (474)
 
+SELECT videogames.name, tournaments.name, players.name
+FROM players
+INNER JOIN player_tournament
+ON player_tournament.player_id = players.id
+INNER JOIN tournaments
+ON tournaments.id = player_tournament.tournament_id
+INNER JOIN tournament_videogame
+ON tournament_videogame.tournament_id = tournaments.id
+INNER JOIN videogames 
+ON videogames.id = tournament_videogame.videogame_id
+WHERE players.name like 's%';
+
 -- 8- Selezionare le città in cui è stato giocato il gioco dell'anno del 2018 (36)
+SELECT tournaments.city
+FROM award_videogame
+INNER JOIN videogames
+ON videogames.id = award_videogame.award_id
+INNER JOIN tournament_videogame
+ON tournament_videogame.videogame_id = award_videogame.videogame_id
+INNER JOIN tournaments
+ON tournaments.id = tournament_videogame.tournament_id
+WHERE award_videogame.award_id = 1
+AND award_videogame.year = 2018;
 
 -- 9- Selezionare i giocatori che hanno giocato al gioco più atteso del 2018 in un torneo del 2019 (3306)
+SELECT players.id
+FROM players
+INNER JOIN player_tournament
+ON player_tournament.player_id = players.id
+INNER JOIN tournaments
+ON tournaments.id = player_tournament.tournament_id
+INNER JOIN tournament_videogame
+ON tournament_videogame.tournament_id = tournaments.id
+INNER JOIN videogames
+ON videogames.id = tournament_videogame.videogame_id
+INNER JOIN award_videogame
+ON award_videogame.videogame_id = videogames.id
+INNER JOIN awards
+ON awards.id = award_videogame.award_id
+WHERE (awards.name like '%atteso%' AND award_videogame.year = 2018)
+AND tournaments.year = 2019;
+;
+
 
 --*********** BONUS ***********
 
